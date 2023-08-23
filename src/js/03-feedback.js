@@ -1,36 +1,38 @@
 import throttle from 'lodash.throttle';
 
-const feedbackForm = document.querySelector('.feedback-form');
-const inputEmail = feedbackForm.querySelector('input');
-const textareaMessage = feedbackForm.querySelector('textarea');
-const buttonForm = feedbackForm.querySelector('button');
-
 const LOCALSTORAGE_KEY = 'feedback-form-state';
 
-let newObj = {};
+let feedbackForm = document.querySelector('.feedback-form');
 
-feedbackForm.addEventListener(
-    'input',
-    throttle(() => {
-      newObj.email = inputEmail.value;
-      newObj.message = textareaMessage.value;
-  
-      localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(newObj));
-    }, 500)
-  );
-  
-  function updateOutput() {
-    try {
-      const parsedSettings = JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY));
-      inputEmail.value = parsedSettings.email || '';
-      textareaMessage.value = parsedSettings.message || '';
-    } catch {}
+feedbackForm.addEventListener('input', throttle(onInputData, 500));
+feedbackForm.addEventListener('submit', onFormSubmit);
+
+let dataForm = JSON.parse(localStorage.getItem(LOCALSTORAGE_KEY)) || {};
+
+const { email, message } = feedbackForm.elements;
+reloadPage();
+
+function onInputData() {
+  dataForm = { email: email.value, message: message.value };
+  localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(dataForm));
+}
+
+function reloadPage() {
+  if (dataForm) {
+    email.value = dataForm.email || '';
+    message.value = dataForm.message || '';
   }
-  
-  feedbackForm.addEventListener('submit', evt => {
-    evt.preventDefault();
-    localStorage.removeItem(LOCALSTORAGE_KEY);
-    inputEmail.value = '';
-    textareaMessage.value = '';
-    console.log(newObj);
-  });
+}
+
+function onFormSubmit(evt) {
+  evt.preventDefault();
+  console.log({ email: email.value, message: message.value });
+
+  if (email.value === '' || message.value === '') {
+    return alert('Please fill in all the fields!');
+  }
+
+  localStorage.removeItem(LOCALSTORAGE_KEY);
+  evt.currentTarget.reset();
+  dataForm = {};
+}
